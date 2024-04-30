@@ -11,6 +11,7 @@ from langchain.memory import ConversationBufferMemory, ConversationBufferWindowM
 # from langchain import PromptTemplate
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import CTransformers
+from langchain.chains import RetrievalQA
 import gradio as gr
 
 # initializes an embeddings model
@@ -53,63 +54,52 @@ if llm is not None and db is not None:
 else:
     print("LLM or Vector Database not initialized")
 
+prompt = PromptTemplate(template=prompt_template,
+                            input_variables=['message'])
 
-def predict(message, history):
-    history_langchain_format = []
-    prompt = PromptTemplate(template=prompt_template,
-                            input_variables=["chat_history", 'message'])
-
-    response = chain.invoke({"question": message, "chat_history": chat_history})
-    answer = response['answer']
-    chat_history.append((message, answer))
-    temp = []
-    for input_question, bot_answer in history:
-        temp.append(input_question)
-        temp.append(bot_answer)
-        history_langchain_format.append(temp)
-    temp.clear()
-    temp.append(message)
-    temp.append(answer)
-    history_langchain_format.append(temp)
-    return answer
-# def predict(message):
-#     prompt = PromptTemplate(template=prompt_template, input_variables=["question"])
-#     response = chain.invoke({"question": message})
-#     return response['answer']
-
-
+qa_chain = RetrievalQA.from_chain_type(
+    llm, retriever=retriever, chain_type_kwargs={"prompt": prompt}
+)
 # gr.ChatInterface(predict).launch()
 
-# # Get user input
-## user_input = input("User: ")
-#Get user input
-print("Bot: Hello There, Welcome! I am a disease prediction bot, to help you. \nCaution: I am only "
-      "suggesting this based on my current knowledge.\nIn no way it is an alternative to consulting a doctor.")
-question_1 = "How may I help you today?"
-print("Bot: ", question_1)
-user_input = input("User: ")
-total_input = user_input
-question_2 = ". How long are you facing this?"
-print("Bot: ", question_2)
-user_input = input("User: ")
-total_input = total_input + question_2 + " " + user_input
-question_3 = ". Do you have any other symptoms?"
-print("Bot: ", question_3)
-user_input = input("User: ")
-total_input = total_input + question_3 + " " + user_input
-question_4 = ". Have you used any medication?"
-print("Bot: ", question_4)
-user_input = input("User: ")
-total_input = total_input + question_4 + " " + user_input
-main_question = ". Can you diagnose and recommend some precautionary measures?"
-total_input = total_input + main_question
-print(total_input)
-# Use the predict function to get LLM's response
-response = predict(total_input,chat_history)
+print("Bot: Hello There, Welcome! I am a disease prediction bot, here to help you.\n"
+      "Caution: I am only suggesting based on my current knowledge. In no way it is an alternative to consulting a doctor.")
 
-# Print LLM's response
-print("Bot:", response)
+# Define questions
+questions = [
+    "How may I help you today?",
+    "How long are you facing this?",
+    "Do you have any other symptoms?",
+    "Have you used any medication?"
+]
 
+# Initialize total_input
+print("Bot:", questions[0])
+total_input = input("User: ") + ". "
 
-# Update chat history
-chat_history.append((user_input, response))
+# Loop through questions
+for question in questions[1:]:
+    print("Bot:", question)
+    user_input = input("User: ")
+    total_input += question + " " + user_input + ". "  # Concatenate user input with a period and space
+
+main_question = "Can you diagnose and recommend some precautionary measures?"
+
+final_question = total_input + " " + main_question
+print(final_question)
+
+result = qa_chain.invoke({"query": final_question})
+print("Bot:", result["result"])
+
+# Ask if the user is satisfied
+user_input = input("Bot: Are you satisfied with my answer? (Yes/No): ")
+
+# If not satisfied, ask for additional information
+if user_input.lower() == "no":
+    print("Bot: Please provide me with some additional information to predict better.")
+    additional_info = input("User: ")
+    final_question += ". Additional information: " + additional_info + " " + main_question
+    result = qa_chain.invoke({"query": final_question})
+    print("Bot:", result["result"])
+
+print("Bot: Thank you! Get well soon :)")
