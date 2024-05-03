@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot</title>
+    <style>
+        /* Add your CSS styles here */
+        /* For example:
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        */
+    </style>
+</head>
+<body>
+    <h1>Medical Chatbot</h1>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            var userInput = document.getElementById('user-input').value;
+            addMessage(userInput, 'user');
+
+            fetch('/send-message', {
+                method: 'POST',
+                body: JSON.stringify({user_input: userInput}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botResponse = data.bot_response;
+                addMessage(botResponse, 'bot');
+            })
+            .catch(error => console.error('Error:', error));
+
+            document.getElementById('user-input').value = '';
+        }
+
+        function addMessage(message, sender) {
+            var messagesContainer = document.getElementById('messages');
+            var messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.innerText = message;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
