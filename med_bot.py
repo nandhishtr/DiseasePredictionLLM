@@ -5,7 +5,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 # from langchain.vectorstores import Chroma
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import TextLoader
-from langchain_community.llms import LlamaCpp
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory
 # from langchain import PromptTemplate
@@ -17,7 +16,7 @@ import gradio as gr
 # initializes an embeddings model
 embeddings = SentenceTransformerEmbeddings(model_name="NeuML/pubmedbert-base-embeddings")
 
-print(embeddings)
+print(embeddings, '')
 
 # loader = TextLoader("health_report.txt")
 loader = DirectoryLoader("health_reports", glob="**/*.txt", show_progress=True)
